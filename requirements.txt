@@ -1,0 +1,7 @@
+torch>=2.0
+pettingzoo>=1.24
+gymnasium
+numpy
+matplotlib
+pygame
+tensorboard

@@ -76,11 +76,13 @@ class Critic(nn.Module):
         """
         if not isinstance(global_state, torch.Tensor):
             global_state = torch.FloatTensor(global_state)
+        device = next(self.parameters()).device
+        global_state = global_state.to(device)
         if global_state.dim() == 1:
             global_state = global_state.unsqueeze(0)
 
         value = self.forward(global_state)
-        return value.squeeze().detach()
+        return value.squeeze().detach().cpu()
 
     def explain(self):
         """Print a human-readable description of the network architecture."""

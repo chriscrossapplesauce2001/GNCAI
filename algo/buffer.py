@@ -135,7 +135,7 @@ class RolloutBuffer:
         self.advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         self.returns = returns
 
-    def get_batches(self, batch_size, agents):
+    def get_batches(self, batch_size, agents, device="cpu"):
         """
         Yield mini-batches for PPO update.
 
@@ -166,13 +166,13 @@ class RolloutBuffer:
                 all_returns.append(self.returns[t])
                 all_advantages.append(self.advantages[t])
 
-        # Convert to tensors
-        all_obs = torch.FloatTensor(np.array(all_obs))
-        all_global = torch.FloatTensor(np.array(all_global))
-        all_actions = torch.FloatTensor(np.array(all_actions))
-        all_log_probs = torch.stack(all_log_probs)
-        all_returns = torch.stack(all_returns)
-        all_advantages = torch.stack(all_advantages)
+        # Convert to tensors and move to device
+        all_obs = torch.FloatTensor(np.array(all_obs)).to(device)
+        all_global = torch.FloatTensor(np.array(all_global)).to(device)
+        all_actions = torch.FloatTensor(np.array(all_actions)).to(device)
+        all_log_probs = torch.stack(all_log_probs).to(device)
+        all_returns = torch.stack(all_returns).to(device)
+        all_advantages = torch.stack(all_advantages).to(device)
 
         # Shuffle and yield batches
         N = len(all_obs)

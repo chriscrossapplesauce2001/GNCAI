@@ -169,7 +169,7 @@ class MAPPO:
         num_batches = 0
 
         for epoch in range(PPO_EPOCHS):
-            for batch in buffer.get_batches(BATCH_SIZE, agents):
+            for batch in buffer.get_batches(BATCH_SIZE, agents, device=self.device):
                 obs, global_states, actions, old_log_probs, returns, advantages = batch
 
                 # --- Actor (Policy) Update ---

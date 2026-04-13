@@ -133,7 +133,10 @@ def train(args):
         num_obstacles=args.num_obstacles,
         verbose=False,
     )
-    mappo = MAPPO(num_agents=args.num_agents)
+    import torch
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"  Device:    {device}" + (f" ({torch.cuda.get_device_name(0)})" if device == "cuda" else ""))
+    mappo = MAPPO(num_agents=args.num_agents, device=device)
 
     # Resume from checkpoint if specified
     start_episode = 0

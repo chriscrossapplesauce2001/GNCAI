@@ -93,6 +93,8 @@ class Actor(nn.Module):
         """
         if not isinstance(obs, torch.Tensor):
             obs = torch.FloatTensor(obs)
+        device = next(self.parameters()).device
+        obs = obs.to(device)
         if obs.dim() == 1:
             obs = obs.unsqueeze(0)
 
@@ -103,7 +105,7 @@ class Actor(nn.Module):
         # Clamp to action space [-1, 1]
         action = torch.clamp(action, -1.0, 1.0)
 
-        return action.squeeze(0).detach().numpy(), log_prob.squeeze(0).detach()
+        return action.squeeze(0).detach().cpu().numpy(), log_prob.squeeze(0).detach().cpu()
 
     def evaluate_action(self, obs, action):
         """

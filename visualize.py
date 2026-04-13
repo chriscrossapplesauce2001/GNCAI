@@ -153,6 +153,15 @@ class Renderer:
                 line_color = RED
             pygame.draw.line(self.screen, line_color, apos, tpos, 1)
 
+        # Draw navigation target
+        if hasattr(env, 'target_pos') and env.target_pos is not None:
+            tgt = world_to_screen(env.target_pos)
+            pygame.draw.circle(self.screen, GREEN, tgt, 10, 2)
+            pygame.draw.line(self.screen, GREEN, (tgt[0] - 12, tgt[1]), (tgt[0] + 12, tgt[1]), 2)
+            pygame.draw.line(self.screen, GREEN, (tgt[0], tgt[1] - 12), (tgt[0], tgt[1] + 12), 2)
+            label = self.font.render("TARGET", True, GREEN)
+            self.screen.blit(label, (tgt[0] - 25, tgt[1] + 14))
+
         # Draw obstacles
         if env._num_obstacles > 0 and env.obstacle_positions is not None:
             for o in range(env._num_obstacles):

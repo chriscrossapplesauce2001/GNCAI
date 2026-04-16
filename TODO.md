@@ -1,8 +1,8 @@
 # TODO
 
 ## Next Up
-- [ ] Add episode termination when swarm centroid reaches the target point (instead of always running 500 steps)
-- [ ] Add completion bonus reward for reaching the target
+- [x] Add episode termination when swarm centroid reaches the target point (instead of always running 500 steps)
+- [x] Add completion bonus reward for reaching the target
 - [ ] Retrain with the new termination condition
 
 ## Future Ideas

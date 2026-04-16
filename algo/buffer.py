@@ -135,6 +135,29 @@ class RolloutBuffer:
         self.advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         self.returns = returns
 
+    def merge(self, other):
+        """Merge another buffer's data into this one (for multi-episode collection)."""
+        self.observations.extend(other.observations)
+        self.global_states.extend(other.global_states)
+        self.actions.extend(other.actions)
+        self.log_probs.extend(other.log_probs)
+        self.rewards.extend(other.rewards)
+        self.values.extend(other.values)
+        self.dones.extend(other.dones)
+
+        # Merge computed returns/advantages
+        if self.returns is not None and other.returns is not None:
+            self.returns = torch.cat([self.returns, other.returns])
+            self.advantages = torch.cat([self.advantages, other.advantages])
+        elif other.returns is not None:
+            self.returns = other.returns
+            self.advantages = other.advantages
+
+    def normalize_advantages(self):
+        """Re-normalize advantages across the full merged buffer."""
+        if self.advantages is not None and len(self.advantages) > 1:
+            self.advantages = (self.advantages - self.advantages.mean()) / (self.advantages.std() + 1e-8)
+
     def get_batches(self, batch_size, agents, device="cpu"):
         """
         Yield mini-batches for PPO update.
@@ -144,6 +167,8 @@ class RolloutBuffer:
 
         We expand each timestep into one entry per agent (parameter sharing
         means we treat all agents' data as the same "type" of experience).
+
+        If batch_size <= 0, yields the entire buffer as one batch.
         """
         T = len(self.observations)
 
@@ -174,8 +199,14 @@ class RolloutBuffer:
         all_returns = torch.stack(all_returns).to(device)
         all_advantages = torch.stack(all_advantages).to(device)
 
-        # Shuffle and yield batches
         N = len(all_obs)
+
+        # Full buffer as one batch (MAPPO SOTA: num_mini_batch=1)
+        if batch_size <= 0:
+            yield (all_obs, all_global, all_actions, all_log_probs, all_returns, all_advantages)
+            return
+
+        # Shuffle and yield mini-batches
         indices = np.random.permutation(N)
 
         for start in range(0, N, batch_size):

@@ -33,9 +33,10 @@ from algo.actor import Actor
 from algo.critic import Critic
 from algo.buffer import RolloutBuffer
 from env.formation_config import (
-    OBS_DIM, ACTION_DIM, HIDDEN_DIM,
+    OBS_DIM, ACTION_DIM, HIDDEN_DIM, MAX_STEPS,
     LEARNING_RATE, GAMMA, GAE_LAMBDA, CLIP_EPSILON,
-    PPO_EPOCHS, BATCH_SIZE, ENTROPY_COEF, VALUE_LOSS_COEF,
+    PPO_EPOCHS, BATCH_SIZE, EPISODES_PER_UPDATE,
+    ENTROPY_COEF, VALUE_LOSS_COEF,
 )
 
 
@@ -60,9 +61,12 @@ class MAPPO:
         # Centralized critic — sees global state during training
         self.critic = Critic(num_agents, obs_dim, HIDDEN_DIM).to(device)
 
-        # Separate optimizers (different learning dynamics)
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr)
+        # Separate optimizers (MAPPO uses Adam eps=1e-5 for stability)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=lr, eps=1e-5)
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=lr, eps=1e-5)
+
+        # Value normalization (running mean/std of returns)
+        self.value_normalizer = ValueNormalizer(device=device)
 
         # Training stats
         self.total_updates = 0
@@ -127,6 +131,7 @@ class MAPPO:
         # Episode statistics
         mean_reward = np.mean(list(total_rewards.values()))
         mean_formation_error = np.mean(formation_errors) if formation_errors else 0.0
+        reached_target = step < MAX_STEPS  # Early exit means target was reached
 
         episode_info = {
             "mean_reward": mean_reward,
@@ -135,6 +140,7 @@ class MAPPO:
             "collisions": total_collisions // 2,  # Counted per agent, so halve
             "mean_formation_error": mean_formation_error,
             "distance_traveled": env.positions[:, 0].mean() if env.positions is not None else 0,
+            "reached_target": reached_target,
         }
 
         if verbose:
@@ -143,6 +149,34 @@ class MAPPO:
                   f"formation_error={mean_formation_error:.2f}")
 
         return buffer, episode_info
+
+    def collect_episodes(self, env, n_episodes=EPISODES_PER_UPDATE, verbose=False):
+        """
+        Collect multiple episodes into a single merged buffer.
+
+        This is the MAPPO SOTA approach: more data per PPO update = more
+        stable gradients = less training variance.
+
+        Returns:
+            merged_buffer: RolloutBuffer with all episodes' data
+            all_infos:     list of episode_info dicts
+        """
+        merged_buffer = None
+        all_infos = []
+
+        for i in range(n_episodes):
+            buffer, ep_info = self.collect_episode(env, verbose=(verbose and i == 0))
+            all_infos.append(ep_info)
+
+            if merged_buffer is None:
+                merged_buffer = buffer
+            else:
+                merged_buffer.merge(buffer)
+
+        # Re-normalize advantages across all episodes
+        merged_buffer.normalize_advantages()
+
+        return merged_buffer, all_infos
 
     def update(self, buffer, verbose=False):
         """
@@ -191,18 +225,24 @@ class MAPPO:
 
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
-                # Gradient clipping — prevents exploding gradients
-                nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=0.5)
+                # Gradient clipping (MAPPO uses max_norm=10.0)
+                nn.utils.clip_grad_norm_(self.actor.parameters(), max_norm=10.0)
                 self.actor_optimizer.step()
 
                 # --- Critic (Value) Update ---
                 values = self.critic(global_states).squeeze(-1)
-                value_loss = VALUE_LOSS_COEF * nn.MSELoss()(values, returns)
+                # Normalize returns for stable value learning
+                normalized_returns = self.value_normalizer.normalize(returns)
+                # Huber loss is more robust to outliers than MSE (e.g. completion bonus)
+                value_loss = VALUE_LOSS_COEF * nn.HuberLoss(delta=10.0)(values, normalized_returns)
 
                 self.critic_optimizer.zero_grad()
                 value_loss.backward()
-                nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=0.5)
+                nn.utils.clip_grad_norm_(self.critic.parameters(), max_norm=10.0)
                 self.critic_optimizer.step()
+
+                # Update running stats for value normalization
+                self.value_normalizer.update(returns)
 
                 # Track stats
                 with torch.no_grad():
@@ -266,3 +306,38 @@ class MAPPO:
         if not load_critic or checkpoint.get("num_agents") != self.num_agents:
             print(f"  [LOAD] Critic NOT loaded (agent count changed: "
                   f"{checkpoint.get('num_agents')} → {self.num_agents})")
+
+
+class ValueNormalizer:
+    """
+    Running mean/std normalization for value targets.
+
+    This is the single most impactful trick from the MAPPO paper.
+    It normalizes returns so the critic always regresses to targets
+    near zero mean and unit variance, regardless of reward scale.
+    """
+
+    def __init__(self, device="cpu"):
+        self.running_mean = torch.zeros(1, device=device)
+        self.running_var = torch.ones(1, device=device)
+        self.count = 1e-4
+
+    def update(self, values):
+        """Update running statistics with new values."""
+        batch_mean = values.mean()
+        batch_var = values.var()
+        batch_count = values.numel()
+
+        delta = batch_mean - self.running_mean
+        total_count = self.count + batch_count
+
+        self.running_mean = self.running_mean + delta * batch_count / total_count
+        m_a = self.running_var * self.count
+        m_b = batch_var * batch_count
+        m2 = m_a + m_b + delta ** 2 * self.count * batch_count / total_count
+        self.running_var = m2 / total_count
+        self.count = total_count
+
+    def normalize(self, values):
+        """Normalize values using running statistics."""
+        return (values - self.running_mean) / (self.running_var.sqrt() + 1e-8)

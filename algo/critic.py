@@ -48,11 +48,14 @@ class Critic(nn.Module):
         self._init_weights()
 
     def _init_weights(self):
-        """Orthogonal initialization for stable RL training."""
+        """Orthogonal initialization — MAPPO SOTA gains."""
         for layer in self.network:
             if isinstance(layer, nn.Linear):
-                nn.init.orthogonal_(layer.weight, gain=1.0)
+                nn.init.orthogonal_(layer.weight, gain=nn.init.calculate_gain('relu'))
                 nn.init.constant_(layer.bias, 0.0)
+        # Output layer: gain=1.0 for value head
+        output_layer = self.network[-1]
+        nn.init.orthogonal_(output_layer.weight, gain=1.0)
 
     def forward(self, global_state):
         """

@@ -31,7 +31,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from env.formation_env import UAVFormationEnv
-from env.formation_config import print_config, MAX_STEPS, NUM_AGENTS
+from env.formation_config import print_config, MAX_STEPS, NUM_AGENTS, EPISODES_PER_UPDATE
 from algo.mappo import MAPPO
 
 # Try to import optional dependencies
@@ -163,63 +163,77 @@ def train(args):
     recent_errors = []
     recent_collisions = []
     recent_distances = []
+    recent_completions = []
+    recent_steps = []
     best_reward = -float("inf")
 
     print("\n  Training started...\n")
     print(f"  {'Episode':>8} | {'Reward':>8} | {'FormErr':>8} | {'Collis':>6} | "
-          f"{'Dist':>6} | {'PolLoss':>8} | {'ValLoss':>8} | {'Entropy':>8}")
-    print("  " + "-" * 85)
+          f"{'Dist':>6} | {'Done%':>6} | {'Steps':>6} | {'PolLoss':>8} | {'ValLoss':>8} | {'Entropy':>8}")
+    print("  " + "-" * 105)
 
     start_time = time.time()
 
-    for episode in range(start_episode, args.episodes):
-        # Collect one episode
-        verbose_ep = args.verbose and episode < 3  # Verbose only for first few
-        buffer, ep_info = mappo.collect_episode(env, verbose=verbose_ep)
+    episode = start_episode
+    while episode < args.episodes:
+        # Collect N episodes before each PPO update (MAPPO SOTA)
+        n_eps = min(EPISODES_PER_UPDATE, args.episodes - episode)
+        verbose_ep = args.verbose and episode < 3
+        merged_buffer, ep_infos = mappo.collect_episodes(env, n_episodes=n_eps,
+                                                          verbose=verbose_ep)
 
-        # PPO update
-        update_stats = mappo.update(buffer, verbose=verbose_ep)
+        # PPO update on merged buffer
+        update_stats = mappo.update(merged_buffer, verbose=verbose_ep)
 
-        # Track metrics
-        recent_rewards.append(ep_info["mean_reward"])
-        recent_errors.append(ep_info["mean_formation_error"])
-        recent_collisions.append(ep_info["collisions"])
-        recent_distances.append(ep_info["distance_traveled"])
+        # Track metrics for each episode in the batch
+        for ep_info in ep_infos:
+            recent_rewards.append(ep_info["mean_reward"])
+            recent_errors.append(ep_info["mean_formation_error"])
+            recent_collisions.append(ep_info["collisions"])
+            recent_distances.append(ep_info["distance_traveled"])
+            recent_completions.append(float(ep_info.get("reached_target", False)))
+            recent_steps.append(ep_info["steps"])
 
-        # Tensorboard logging
-        if writer:
-            writer.add_scalar("reward/mean", ep_info["mean_reward"], episode)
-            writer.add_scalar("metrics/formation_error", ep_info["mean_formation_error"], episode)
-            writer.add_scalar("metrics/collisions", ep_info["collisions"], episode)
-            writer.add_scalar("metrics/distance", ep_info["distance_traveled"], episode)
-            writer.add_scalar("loss/policy", update_stats["policy_loss"], episode)
-            writer.add_scalar("loss/value", update_stats["value_loss"], episode)
-            writer.add_scalar("loss/entropy", update_stats["entropy"], episode)
-            writer.add_scalar("loss/clip_fraction", update_stats["clip_fraction"], episode)
+            # Tensorboard logging
+            if writer:
+                writer.add_scalar("reward/mean", ep_info["mean_reward"], episode)
+                writer.add_scalar("metrics/formation_error", ep_info["mean_formation_error"], episode)
+                writer.add_scalar("metrics/collisions", ep_info["collisions"], episode)
+                writer.add_scalar("metrics/distance", ep_info["distance_traveled"], episode)
+                writer.add_scalar("metrics/reached_target", float(ep_info.get("reached_target", False)), episode)
+                writer.add_scalar("metrics/episode_steps", ep_info["steps"], episode)
+                writer.add_scalar("loss/policy", update_stats["policy_loss"], episode)
+                writer.add_scalar("loss/value", update_stats["value_loss"], episode)
+                writer.add_scalar("loss/entropy", update_stats["entropy"], episode)
+                writer.add_scalar("loss/clip_fraction", update_stats["clip_fraction"], episode)
+
+            episode += 1
 
         # Print summary every 50 episodes
-        if (episode + 1) % 50 == 0 or episode == 0:
+        if episode % 50 < EPISODES_PER_UPDATE or episode <= EPISODES_PER_UPDATE:
             avg_reward = np.mean(recent_rewards[-50:])
             avg_error = np.mean(recent_errors[-50:])
             avg_coll = np.mean(recent_collisions[-50:])
             avg_dist = np.mean(recent_distances[-50:])
+            avg_done = np.mean(recent_completions[-50:]) * 100
+            avg_steps = np.mean(recent_steps[-50:])
 
             elapsed = time.time() - start_time
-            eps_per_sec = (episode + 1) / elapsed
+            eps_per_sec = episode / max(elapsed, 1)
 
-            print(f"  {episode + 1:>8} | {avg_reward:>+8.1f} | {avg_error:>8.2f} | "
-                  f"{avg_coll:>6.1f} | {avg_dist:>6.1f} | "
+            print(f"  {episode:>8} | {avg_reward:>+8.1f} | {avg_error:>8.2f} | "
+                  f"{avg_coll:>6.1f} | {avg_dist:>6.1f} | {avg_done:>5.0f}% | {avg_steps:>6.0f} | "
                   f"{update_stats['policy_loss']:>8.4f} | "
                   f"{update_stats['value_loss']:>8.4f} | "
                   f"{update_stats['entropy']:>8.4f}")
 
-            if (episode + 1) % 200 == 0:
+            if episode % 200 < EPISODES_PER_UPDATE:
                 print(f"           [{eps_per_sec:.1f} episodes/sec, "
                       f"{elapsed:.0f}s elapsed]")
 
         # Save checkpoint every 200 episodes (and keep best)
-        if (episode + 1) % 200 == 0:
-            path = os.path.join(args.checkpoint_dir, f"checkpoint_{episode + 1}.pt")
+        if episode % 200 < EPISODES_PER_UPDATE:
+            path = os.path.join(args.checkpoint_dir, f"checkpoint_{episode}.pt")
             mappo.save(path)
 
             avg_reward = np.mean(recent_rewards[-200:])
@@ -228,16 +242,16 @@ def train(args):
                 best_path = os.path.join(args.checkpoint_dir, "best.pt")
                 mappo.save(best_path)
 
-        # Render episode if requested — window opens fresh each time, then closes
-        if use_renderer and (episode + 1) % args.render_every == 0:
-            print(f"\n  [RENDER] Visualizing episode {episode + 1}...")
+        # Render episode if requested
+        if use_renderer and episode % args.render_every < EPISODES_PER_UPDATE:
+            print(f"\n  [RENDER] Visualizing episode {episode}...")
             renderer = Renderer()
             render_env = UAVFormationEnv(
                 num_agents=args.num_agents,
                 num_obstacles=args.num_obstacles,
                 verbose=False,
             )
-            render_episode(mappo, render_env, renderer, episode + 1)
+            render_episode(mappo, render_env, renderer, episode)
             renderer.close()
             print("  [RENDER] Window closed, continuing training...")
 
@@ -255,6 +269,8 @@ def train(args):
     print(f"  Final reward (avg last 50): {np.mean(recent_rewards[-50:]):+.2f}")
     print(f"  Final form error (avg 50):  {np.mean(recent_errors[-50:]):.2f}")
     print(f"  Final collisions (avg 50):  {np.mean(recent_collisions[-50:]):.1f}")
+    print(f"  Completion rate (last 50):  {np.mean(recent_completions[-50:]) * 100:.0f}%")
+    print(f"  Avg steps (last 50):        {np.mean(recent_steps[-50:]):.0f}")
     print(f"  Best avg reward:            {best_reward:+.2f}")
     print(f"  Checkpoints in:             {args.checkpoint_dir}/")
     if HAS_TB:

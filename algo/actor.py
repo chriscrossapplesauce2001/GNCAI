@@ -38,8 +38,7 @@ class Actor(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
-            nn.Tanh(),  # Squash output to [-1, 1] to match action space
+            nn.Linear(hidden_dim, action_dim),  # Raw mean, squashed by tanh at sampling time
         )
 
         # Learnable log standard deviation (starts at -0.5 ≈ std of 0.6)
@@ -52,34 +51,42 @@ class Actor(nn.Module):
         self._init_weights()
 
     def _init_weights(self):
-        """Orthogonal initialization — a common trick for RL networks."""
+        """Orthogonal initialization — MAPPO SOTA gains."""
         for layer in self.network:
             if isinstance(layer, nn.Linear):
-                nn.init.orthogonal_(layer.weight, gain=0.5)
+                nn.init.orthogonal_(layer.weight, gain=nn.init.calculate_gain('relu'))
                 nn.init.constant_(layer.bias, 0.0)
+        # Output layer: small gain so initial actions are near zero (more exploration)
+        output_layer = self.network[-1]  # Final Linear layer
+        nn.init.orthogonal_(output_layer.weight, gain=0.01)
 
     def forward(self, obs):
         """
-        Forward pass: observation → action mean.
+        Forward pass: observation → squashed action mean.
+
+        Returns tanh(network(obs)), so the output is always in (-1, 1).
+        Use this for deterministic evaluation (no sampling).
 
         Args:
             obs: Tensor of shape (batch, obs_dim) or (obs_dim,)
         Returns:
-            action_mean: Tensor of shape (batch, action_dim)
+            action_mean: Tensor of shape (batch, action_dim), range (-1, 1)
         """
-        return self.network(obs)
+        return torch.tanh(self.network(obs))
 
     def get_distribution(self, obs):
         """
-        Get the full action distribution for the given observation.
+        Get the raw (pre-squash) action distribution.
 
-        Returns a Normal distribution you can sample from or evaluate.
+        Returns a Normal distribution in the unbounded space.
+        Callers are responsible for applying tanh squashing and
+        the log-prob correction (see get_action / evaluate_action).
         """
-        action_mean = self.forward(obs)
-        # Clamp log_std to prevent extreme values
+        # Use raw network output, NOT forward() which applies tanh
+        raw_mean = self.network(obs)
         log_std = torch.clamp(self.log_std, -2.0, 0.5)
         action_std = log_std.exp()
-        return Normal(action_mean, action_std)
+        return Normal(raw_mean, action_std)
 
     def get_action(self, obs):
         """
@@ -99,11 +106,15 @@ class Actor(nn.Module):
             obs = obs.unsqueeze(0)
 
         dist = self.get_distribution(obs)
-        action = dist.sample()
-        log_prob = dist.log_prob(action).sum(dim=-1)
+        raw_action = dist.sample()
+        action = torch.tanh(raw_action)
 
-        # Clamp to action space [-1, 1]
-        action = torch.clamp(action, -1.0, 1.0)
+        # Log-prob with tanh squashing correction (SAC paper, appendix C).
+        # tanh compresses the tails of the Gaussian, so the density of the
+        # squashed action is higher than the raw Gaussian density. We correct
+        # by subtracting log |det(d tanh / d raw)| = sum log(1 - tanh^2).
+        log_prob = dist.log_prob(raw_action).sum(dim=-1)
+        log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1)
 
         return action.squeeze(0).detach().cpu().numpy(), log_prob.squeeze(0).detach().cpu()
 
@@ -114,12 +125,23 @@ class Actor(nn.Module):
         Used during PPO update — we need to compute the "new" probability
         of actions that were taken under the "old" policy.
 
+        Args:
+            obs:    tensor of observations
+            action: tensor of squashed actions (in (-1, 1), as stored in buffer)
+
         Returns:
-            log_prob: tensor, log probability of the action under current policy
-            entropy:  tensor, entropy of the distribution (measures exploration)
+            log_prob: tensor, corrected log probability under current policy
+            entropy:  tensor, entropy of the raw distribution (measures exploration)
         """
         dist = self.get_distribution(obs)
-        log_prob = dist.log_prob(action).sum(dim=-1)
+
+        # Recover the pre-squash action via inverse tanh (atanh).
+        # Clamp to avoid atanh(±1) = ±inf at the boundaries.
+        raw_action = torch.atanh(action.clamp(-0.999, 0.999))
+
+        log_prob = dist.log_prob(raw_action).sum(dim=-1)
+        log_prob -= torch.log(1 - action.pow(2) + 1e-6).sum(dim=-1)
+
         entropy = dist.entropy().sum(dim=-1)
         return log_prob, entropy
 

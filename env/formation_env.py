@@ -18,8 +18,7 @@ from pettingzoo import ParallelEnv
 from env.formation_config import (
     WORLD_SIZE, DT, MAX_SPEED, AGENT_RADIUS, OBSTACLE_RADIUS,
     NUM_AGENTS, MAX_STEPS, OBS_DIM, ACTION_DIM,
-    FORMATION_WEIGHT, TIME_PENALTY, APPROACH_WEIGHT, COLLISION_PENALTY,
-    OBSTACLE_PENALTY, SMOOTHNESS_WEIGHT,
+    APPROACH_WEIGHT, COLLISION_PENALTY,
     TARGET_THRESHOLD, COMPLETION_BONUS,
     get_formation_offsets,
 )
@@ -216,10 +215,9 @@ class UAVFormationEnv(ParallelEnv):
 
         if self.verbose and self._step_count % 50 == 0:
             mean_reward = np.mean(list(rewards.values()))
-            mean_error = np.mean([infos[a]["formation_error"] for a in self.possible_agents])
             total_coll = sum(agent_collisions)
             print(f"  Step {self._step_count}: reward={mean_reward:+.3f}, "
-                  f"form_err={mean_error:.2f}, collisions={total_coll}")
+                  f"collisions={total_coll}")
 
         return observations, rewards, terminations, truncations, infos
 
@@ -310,49 +308,22 @@ class UAVFormationEnv(ParallelEnv):
 
     def _compute_reward(self, agent_idx, action, num_agent_collisions, num_obstacle_collisions):
         """
-        Compute reward for one agent. 5 weighted components:
-          1. Formation keeping (exponential decay with distance to target)
-          2. Time penalty (constant per-step cost to incentivize reaching target)
-          3. Approach reward (reducing distance to navigation target)
-          4. Collision penalty (per-frame overlap, gentle)
-          5. Smoothness reward (penalize jerky acceleration changes)
+        Compute reward for one agent.
+        - Approach: reward closing in on target (scaled by APPROACH_WEIGHT)
+        - Collision: harsh penalty per frame of agent-agent overlap
         Plus one-time completion bonus (applied in step()).
         """
-        # Formation reward: exp(-error/5)
-        formation_error = self._get_formation_error(agent_idx)
-        formation_reward = np.exp(-formation_error / 5.0)
-
-        # Approach reward: reward for reducing distance to target
         dist_to_target = np.linalg.norm(self.target_pos - self.positions[agent_idx])
-        approach_reward = (self.prev_distances_to_target[agent_idx] - dist_to_target) / (MAX_SPEED * DT)
 
-        # Collision penalty (per frame of overlap)
+        approach_reward = APPROACH_WEIGHT * (self.prev_distances_to_target[agent_idx] - dist_to_target) / (MAX_SPEED * DT)
+
         collision_penalty = float(num_agent_collisions > 0)
 
-        # Obstacle penalty (per frame of overlap)
-        obstacle_penalty = float(num_obstacle_collisions > 0)
-
-        # Smoothness reward: penalize large changes in acceleration
-        action_diff = np.linalg.norm(action - self.prev_actions[agent_idx])
-        smoothness_reward = -action_diff
-
-        # Total reward
-        reward = (
-            FORMATION_WEIGHT * formation_reward
-            - TIME_PENALTY
-            + APPROACH_WEIGHT * approach_reward
-            - COLLISION_PENALTY * collision_penalty
-            - OBSTACLE_PENALTY * obstacle_penalty
-            + SMOOTHNESS_WEIGHT * smoothness_reward
-        )
+        reward = approach_reward - COLLISION_PENALTY * collision_penalty
 
         info = {
-            "formation_error": formation_error,
-            "formation_reward": formation_reward,
-            "approach_reward": approach_reward,
             "collision_penalty": collision_penalty,
-            "obstacle_penalty": obstacle_penalty,
-            "smoothness_reward": smoothness_reward,
+            "dist_to_target": dist_to_target,
             "num_agent_collisions": num_agent_collisions,
             "num_obstacle_collisions": num_obstacle_collisions,
         }

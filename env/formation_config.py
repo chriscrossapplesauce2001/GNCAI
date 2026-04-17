@@ -13,13 +13,14 @@ import numpy as np
 
 WORLD_SIZE = 100.0       # 100x100 2D world
 DT = 0.1                 # Physics timestep (seconds) — Euler integration step size
-MAX_SPEED = 2.0           # Maximum agent velocity magnitude (units/s)
+MAX_SPEED = 5.0           # Maximum agent velocity magnitude (units/s)
 AGENT_RADIUS = 1.5        # Agent collision radius (units)
 OBSTACLE_RADIUS = 3.0     # Obstacle collision radius (units)
 NUM_AGENTS = 3            # Default number of agents
 MAX_STEPS = 400           # Steps per episode before truncation
 TARGET_THRESHOLD = 12.0   # Each agent must be within this distance to "arrive" at target
-COMPLETION_BONUS = 50.0   # Per-agent bonus reward for reaching the target
+DESIRED_SPACING = 8.0     # Target inter-agent distance (units)
+COMPLETION_BONUS = 500.0  # Per-agent bonus reward for reaching the target
 
 # =============================================================================
 # Observation & Action Dimensions
@@ -55,18 +56,18 @@ HIDDEN_DIM = 128          # Hidden layer size for Actor and Critic networks
 # Reward Weights
 # =============================================================================
 
-FORMATION_WEIGHT = 0.0     # disabled — competes with approach during initial learning
-TIME_PENALTY = 0.1         # gentle nudge to reach target faster
-APPROACH_WEIGHT = 1.0      # primary signal: move toward target
-COLLISION_PENALTY = 0.2    # per-frame overlap penalty (gentle)
-OBSTACLE_PENALTY = 0.2     # per-frame obstacle overlap penalty
-SMOOTHNESS_WEIGHT = 0.1    # smooth actions (penalize large acceleration changes)
+FORMATION_WEIGHT = 0.3     # spacing penalty weight (capped)
+TIME_PENALTY = 0.0         # disabled for now
+APPROACH_WEIGHT = 2.0      # approach reward scale
+COLLISION_PENALTY = 20.0   # harsh collision penalty
+OBSTACLE_PENALTY = 0.0     # disabled for now
+SMOOTHNESS_WEIGHT = 0.0    # disabled for now
 
 # =============================================================================
 # PPO Hyperparameters
 # =============================================================================
 
-LEARNING_RATE = 3e-4       # Adam optimizer learning rate
+LEARNING_RATE = 1e-4       # Lower for fine-tuning from navigation checkpoint
 GAMMA = 0.99               # Discount factor (how much to care about future rewards)
 GAE_LAMBDA = 0.95          # GAE lambda (bias-variance tradeoff for advantage estimation)
 CLIP_EPSILON = 0.2         # PPO clipping range — limits policy update magnitude

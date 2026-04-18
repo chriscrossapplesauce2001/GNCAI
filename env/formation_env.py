@@ -18,7 +18,7 @@ from pettingzoo import ParallelEnv
 from env.formation_config import (
     WORLD_SIZE, DT, MAX_SPEED, AGENT_RADIUS, OBSTACLE_RADIUS,
     NUM_AGENTS, MAX_STEPS, OBS_DIM, ACTION_DIM,
-    APPROACH_WEIGHT, COLLISION_PENALTY,
+    APPROACH_WEIGHT, COLLISION_PENALTY, SAFE_DIST,
     TARGET_THRESHOLD, COMPLETION_BONUS,
     get_formation_offsets,
 )
@@ -161,11 +161,16 @@ class UAVFormationEnv(ParallelEnv):
                         self.obstacle_positions[o, axis] = WORLD_SIZE - OBSTACLE_RADIUS
                         self.obstacle_velocities[o, axis] *= -1.0
 
-        # 5. Collision detection
+        # 5. Collision detection + nearest-neighbor distance (for shaped penalty)
         agent_collisions = np.zeros(self._num_agents, dtype=int)
+        min_neighbor_dist = np.full(self._num_agents, np.inf)
         for i in range(self._num_agents):
             for j in range(i + 1, self._num_agents):
                 dist = np.linalg.norm(self.positions[i] - self.positions[j])
+                if dist < min_neighbor_dist[i]:
+                    min_neighbor_dist[i] = dist
+                if dist < min_neighbor_dist[j]:
+                    min_neighbor_dist[j] = dist
                 if dist < 2 * AGENT_RADIUS:
                     agent_collisions[i] += 1
                     agent_collisions[j] += 1
@@ -186,7 +191,8 @@ class UAVFormationEnv(ParallelEnv):
         infos = {}
         for i, agent in enumerate(self.possible_agents):
             reward, info = self._compute_reward(i, accel[i], agent_collisions[i],
-                                                  obstacle_collisions[i])
+                                                  obstacle_collisions[i],
+                                                  min_neighbor_dist[i])
             rewards[agent] = reward
             infos[agent] = info
 
@@ -306,23 +312,27 @@ class UAVFormationEnv(ParallelEnv):
         target = centroid + self.formation_offsets[agent_idx]
         return np.linalg.norm(self.positions[agent_idx] - target)
 
-    def _compute_reward(self, agent_idx, action, num_agent_collisions, num_obstacle_collisions):
+    def _compute_reward(self, agent_idx, action, num_agent_collisions,
+                        num_obstacle_collisions, min_neighbor_dist):
         """
-        Compute reward for one agent.
-        - Approach: reward closing in on target (scaled by APPROACH_WEIGHT)
-        - Collision: harsh penalty per frame of agent-agent overlap
+        Compute reward for one agent. Two symmetric shaped terms:
+          - approach:  +APPROACH_WEIGHT   when moving straight at target at max speed
+          - proximity: -COLLISION_PENALTY when overlapping a neighbor, 0 at safe dist
         Plus one-time completion bonus (applied in step()).
+        Hard-overlap count still tracked in info for stats.
         """
         dist_to_target = np.linalg.norm(self.target_pos - self.positions[agent_idx])
 
         approach_reward = APPROACH_WEIGHT * (self.prev_distances_to_target[agent_idx] - dist_to_target) / (MAX_SPEED * DT)
 
-        collision_penalty = float(num_agent_collisions > 0)
+        proximity = max(0.0, (SAFE_DIST - float(min_neighbor_dist)) / SAFE_DIST)
+        proximity_penalty = COLLISION_PENALTY * proximity
 
-        reward = approach_reward - COLLISION_PENALTY * collision_penalty
+        reward = approach_reward - proximity_penalty
 
         info = {
-            "collision_penalty": collision_penalty,
+            "proximity_penalty": proximity_penalty,
+            "min_neighbor_dist": float(min_neighbor_dist),
             "dist_to_target": dist_to_target,
             "num_agent_collisions": num_agent_collisions,
             "num_obstacle_collisions": num_obstacle_collisions,

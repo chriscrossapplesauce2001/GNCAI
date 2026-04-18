@@ -58,8 +58,9 @@ HIDDEN_DIM = 128          # Hidden layer size for Actor and Critic networks
 
 FORMATION_WEIGHT = 0.3     # spacing penalty weight (capped)
 TIME_PENALTY = 0.0         # disabled for now
-APPROACH_WEIGHT = 2.0      # approach reward scale
-COLLISION_PENALTY = 20.0   # harsh collision penalty
+APPROACH_WEIGHT = 2.0      # approach reward scale (+2/step max)
+COLLISION_PENALTY = 2.0    # proximity penalty scale (-2/step when overlapping)
+SAFE_DIST = 5.0            # ramp distance for proximity penalty (2*AGENT_RADIUS + buffer)
 OBSTACLE_PENALTY = 0.0     # disabled for now
 SMOOTHNESS_WEIGHT = 0.0    # disabled for now
 
@@ -148,7 +149,7 @@ def print_config():
     print(f"    Formation:      {FORMATION_WEIGHT}")
     print(f"    Time penalty:   -{TIME_PENALTY}")
     print(f"    Approach:       {APPROACH_WEIGHT}")
-    print(f"    Collision:      -{COLLISION_PENALTY}")
+    print(f"    Proximity:      -{COLLISION_PENALTY} (ramp over {SAFE_DIST} units)")
     print(f"    Obstacle:       -{OBSTACLE_PENALTY}")
     print(f"    Smoothness:     {SMOOTHNESS_WEIGHT}")
     print("=" * 60)

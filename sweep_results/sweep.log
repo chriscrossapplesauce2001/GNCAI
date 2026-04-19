@@ -1,0 +1,69 @@
+/home/agentsmith/cwilsch/RL/GNCAI/sweep_optuna.py:179: ExperimentalWarning: Argument ``multivariate`` is an experimental feature. The interface can change in the future.
+  sampler = TPESampler(seed=42, n_startup_trials=10, multivariate=True)
+[I 2026-04-19 01:16:49,288] A new study created in RDB with name: formation_v1
+[sweep] study=formation_v1 storage=sqlite:///sweep_results/study.db
+[sweep] budget: 21600s  n_jobs=2  eps/trial=1000
+  [trial   0] score=-196.92  comp= 18.0%  coll=107.5  params={'COLLISION_PENALTY': 2.0, 'SAFE_DIST': 5.0, 'APPROACH_WEIGHT': 2.0, 'PPO_EPOCHS': 10}
+[I 2026-04-19 01:42:58,035] Trial 0 finished with value: -196.92 and parameters: {'COLLISION_PENALTY': 2.0, 'SAFE_DIST': 5.0, 'APPROACH_WEIGHT': 2.0, 'PPO_EPOCHS': 10}. Best is trial 0 with value: -196.92.
+  [trial   1] score=-144.68  comp=  3.0%  coll= 73.8  params={'COLLISION_PENALTY': 15.0, 'SAFE_DIST': 8.0, 'APPROACH_WEIGHT': 2.0, 'PPO_EPOCHS': 4}
+[I 2026-04-19 01:43:34,582] Trial 1 finished with value: -144.68 and parameters: {'COLLISION_PENALTY': 15.0, 'SAFE_DIST': 8.0, 'APPROACH_WEIGHT': 2.0, 'PPO_EPOCHS': 4}. Best is trial 1 with value: -144.68.
+  [trial   2] score=-606.40  comp=  0.0%  coll=303.2  params={'COLLISION_PENALTY': 30.0, 'SAFE_DIST': 10.0, 'APPROACH_WEIGHT': 1.5, 'PPO_EPOCHS': 4}
+[I 2026-04-19 02:10:31,282] Trial 2 finished with value: -606.4 and parameters: {'COLLISION_PENALTY': 30.0, 'SAFE_DIST': 10.0, 'APPROACH_WEIGHT': 1.5, 'PPO_EPOCHS': 4}. Best is trial 1 with value: -144.68.
+  [trial   3] score=-136.42  comp=  8.0%  coll= 72.2  params={'COLLISION_PENALTY': 8.56, 'SAFE_DIST': 7.692, 'APPROACH_WEIGHT': 2.244, 'PPO_EPOCHS': 4}
+[I 2026-04-19 02:10:50,410] Trial 3 finished with value: -136.42 and parameters: {'COLLISION_PENALTY': 8.559761026059714, 'SAFE_DIST': 7.691783671692013, 'APPROACH_WEIGHT': 2.2444566575696308, 'PPO_EPOCHS': 4}. Best is trial 3 with value: -136.42.
+  [trial   5] score=-181.52  comp=  0.0%  coll= 90.8  params={'COLLISION_PENALTY': 39.939, 'SAFE_DIST': 11.929, 'APPROACH_WEIGHT': 3.379, 'PPO_EPOCHS': 4}
+[I 2026-04-19 02:37:59,579] Trial 5 finished with value: -181.52 and parameters: {'COLLISION_PENALTY': 39.93853874666742, 'SAFE_DIST': 11.928764254223655, 'APPROACH_WEIGHT': 3.3787806592323597, 'PPO_EPOCHS': 4}. Best is trial 3 with value: -136.42.
+  [trial   4] score=-205.58  comp=  0.0%  coll=102.8  params={'COLLISION_PENALTY': 43.915, 'SAFE_DIST': 10.483, 'APPROACH_WEIGHT': 2.259, 'PPO_EPOCHS': 7}
+[I 2026-04-19 02:38:34,379] Trial 4 finished with value: -205.58 and parameters: {'COLLISION_PENALTY': 43.914784200045936, 'SAFE_DIST': 10.48299221317461, 'APPROACH_WEIGHT': 2.2593114945423416, 'PPO_EPOCHS': 7}. Best is trial 3 with value: -136.42.
+  [trial   7] score=-153.64  comp= 15.0%  coll= 84.3  params={'COLLISION_PENALTY': 3.271, 'SAFE_DIST': 6.203, 'APPROACH_WEIGHT': 0.84, 'PPO_EPOCHS': 7}
+[I 2026-04-19 03:03:52,392] Trial 7 finished with value: -153.64 and parameters: {'COLLISION_PENALTY': 3.2714320207749132, 'SAFE_DIST': 6.202666853994352, 'APPROACH_WEIGHT': 0.8397252854260335, 'PPO_EPOCHS': 7}. Best is trial 3 with value: -136.42.
+  [trial   6] score=-226.90  comp=  2.0%  coll=114.5  params={'COLLISION_PENALTY': 16.995, 'SAFE_DIST': 10.378, 'APPROACH_WEIGHT': 2.448, 'PPO_EPOCHS': 10}
+[I 2026-04-19 03:05:20,122] Trial 6 finished with value: -226.9 and parameters: {'COLLISION_PENALTY': 16.994983594132485, 'SAFE_DIST': 10.378212458604796, 'APPROACH_WEIGHT': 2.4475678454122884, 'PPO_EPOCHS': 10}. Best is trial 3 with value: -136.42.
+  [trial   8] score=-124.28  comp=  8.0%  coll= 66.1  params={'COLLISION_PENALTY': 3.171, 'SAFE_DIST': 11.748, 'APPROACH_WEIGHT': 2.571, 'PPO_EPOCHS': 3}
+[I 2026-04-19 03:31:18,894] Trial 8 finished with value: -124.28 and parameters: {'COLLISION_PENALTY': 3.1710800708030815, 'SAFE_DIST': 11.748216147046733, 'APPROACH_WEIGHT': 2.5712228832001105, 'PPO_EPOCHS': 3}. Best is trial 8 with value: -124.28.
+  [trial   9] score=-150.92  comp=  0.0%  coll= 75.5  params={'COLLISION_PENALTY': 10.198, 'SAFE_DIST': 8.672, 'APPROACH_WEIGHT': 2.357, 'PPO_EPOCHS': 4}
+[I 2026-04-19 03:33:31,806] Trial 9 finished with value: -150.92 and parameters: {'COLLISION_PENALTY': 10.198026720004902, 'SAFE_DIST': 8.671868314813441, 'APPROACH_WEIGHT': 2.3574721851720843, 'PPO_EPOCHS': 4}. Best is trial 8 with value: -124.28.
+  [trial  10] score= -95.08  comp=  6.0%  coll= 50.5  params={'COLLISION_PENALTY': 3.694, 'SAFE_DIST': 9.455, 'APPROACH_WEIGHT': 1.452, 'PPO_EPOCHS': 3}
+[I 2026-04-19 03:58:59,075] Trial 10 finished with value: -95.08 and parameters: {'COLLISION_PENALTY': 3.6942381295144475, 'SAFE_DIST': 9.455183601516811, 'APPROACH_WEIGHT': 1.4523282703659097, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  11] score=-166.02  comp= 15.0%  coll= 90.5  params={'COLLISION_PENALTY': 2.465, 'SAFE_DIST': 10.174, 'APPROACH_WEIGHT': 2.623, 'PPO_EPOCHS': 3}
+[I 2026-04-19 04:00:34,556] Trial 11 finished with value: -166.02 and parameters: {'COLLISION_PENALTY': 2.4646434510289255, 'SAFE_DIST': 10.174253491511248, 'APPROACH_WEIGHT': 2.623192524309652, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  12] score=-127.84  comp=  1.0%  coll= 64.4  params={'COLLISION_PENALTY': 3.752, 'SAFE_DIST': 10.591, 'APPROACH_WEIGHT': 1.379, 'PPO_EPOCHS': 3}
+[I 2026-04-19 04:25:12,057] Trial 12 finished with value: -127.84 and parameters: {'COLLISION_PENALTY': 3.75208889490531, 'SAFE_DIST': 10.590606721541695, 'APPROACH_WEIGHT': 1.3794142069799906, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  13] score=-176.76  comp= 32.0%  coll=104.4  params={'COLLISION_PENALTY': 3.25, 'SAFE_DIST': 11.86, 'APPROACH_WEIGHT': 2.937, 'PPO_EPOCHS': 10}
+[I 2026-04-19 04:26:54,178] Trial 13 finished with value: -176.76 and parameters: {'COLLISION_PENALTY': 3.250309761151948, 'SAFE_DIST': 11.859592934172024, 'APPROACH_WEIGHT': 2.9373722629853263, 'PPO_EPOCHS': 10}. Best is trial 10 with value: -95.08.
+  [trial  14] score=-299.18  comp= 27.0%  coll=163.1  params={'COLLISION_PENALTY': 5.067, 'SAFE_DIST': 10.905, 'APPROACH_WEIGHT': 3.469, 'PPO_EPOCHS': 5}
+[I 2026-04-19 04:51:25,845] Trial 14 finished with value: -299.18 and parameters: {'COLLISION_PENALTY': 5.067321899115957, 'SAFE_DIST': 10.904927770665807, 'APPROACH_WEIGHT': 3.468851741162758, 'PPO_EPOCHS': 5}. Best is trial 10 with value: -95.08.
+  [trial  15] score=-178.82  comp= 12.0%  coll= 95.4  params={'COLLISION_PENALTY': 3.957, 'SAFE_DIST': 11.495, 'APPROACH_WEIGHT': 3.996, 'PPO_EPOCHS': 3}
+[I 2026-04-19 04:53:27,888] Trial 15 finished with value: -178.82 and parameters: {'COLLISION_PENALTY': 3.957486495052567, 'SAFE_DIST': 11.494803835982319, 'APPROACH_WEIGHT': 3.9958243618646394, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  17] score=-141.08  comp=  1.0%  coll= 71.0  params={'COLLISION_PENALTY': 6.98, 'SAFE_DIST': 7.449, 'APPROACH_WEIGHT': 1.206, 'PPO_EPOCHS': 3}
+[I 2026-04-19 05:19:21,166] Trial 17 finished with value: -141.08 and parameters: {'COLLISION_PENALTY': 6.980302473297544, 'SAFE_DIST': 7.448883817924005, 'APPROACH_WEIGHT': 1.206383508172506, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  16] score=-299.18  comp=  0.0%  coll=149.6  params={'COLLISION_PENALTY': 8.206, 'SAFE_DIST': 10.597, 'APPROACH_WEIGHT': 0.944, 'PPO_EPOCHS': 10}
+[I 2026-04-19 05:19:43,260] Trial 16 finished with value: -299.18 and parameters: {'COLLISION_PENALTY': 8.205756992407064, 'SAFE_DIST': 10.597408620609533, 'APPROACH_WEIGHT': 0.9437746232194038, 'PPO_EPOCHS': 10}. Best is trial 10 with value: -95.08.
+  [trial  19] score=-107.60  comp=  1.0%  coll= 54.3  params={'COLLISION_PENALTY': 6.364, 'SAFE_DIST': 11.174, 'APPROACH_WEIGHT': 2.337, 'PPO_EPOCHS': 3}
+[I 2026-04-19 05:46:08,105] Trial 19 finished with value: -107.6 and parameters: {'COLLISION_PENALTY': 6.364218805705991, 'SAFE_DIST': 11.174313255168236, 'APPROACH_WEIGHT': 2.3371312550966996, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  18] score=-440.00  comp=  0.0%  coll=220.0  params={'COLLISION_PENALTY': 4.815, 'SAFE_DIST': 9.704, 'APPROACH_WEIGHT': 0.564, 'PPO_EPOCHS': 10}
+[I 2026-04-19 05:48:12,073] Trial 18 finished with value: -440.0 and parameters: {'COLLISION_PENALTY': 4.815230201354435, 'SAFE_DIST': 9.703857880728261, 'APPROACH_WEIGHT': 0.5638512553987354, 'PPO_EPOCHS': 10}. Best is trial 10 with value: -95.08.
+  [trial  20] score=-141.52  comp=  2.0%  coll= 71.8  params={'COLLISION_PENALTY': 14.468, 'SAFE_DIST': 11.486, 'APPROACH_WEIGHT': 3.223, 'PPO_EPOCHS': 3}
+[I 2026-04-19 06:13:06,620] Trial 20 finished with value: -141.52 and parameters: {'COLLISION_PENALTY': 14.46849725816286, 'SAFE_DIST': 11.485953065275643, 'APPROACH_WEIGHT': 3.2227725356303636, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  21] score=-118.78  comp=  0.0%  coll= 59.4  params={'COLLISION_PENALTY': 39.342, 'SAFE_DIST': 6.53, 'APPROACH_WEIGHT': 3.525, 'PPO_EPOCHS': 4}
+[I 2026-04-19 06:15:44,258] Trial 21 finished with value: -118.78 and parameters: {'COLLISION_PENALTY': 39.34164518521254, 'SAFE_DIST': 6.529728843895184, 'APPROACH_WEIGHT': 3.5253777383827583, 'PPO_EPOCHS': 4}. Best is trial 10 with value: -95.08.
+  [trial  22] score=-137.70  comp=  0.0%  coll= 68.8  params={'COLLISION_PENALTY': 7.364, 'SAFE_DIST': 11.707, 'APPROACH_WEIGHT': 1.778, 'PPO_EPOCHS': 3}
+[I 2026-04-19 06:40:28,541] Trial 22 finished with value: -137.7 and parameters: {'COLLISION_PENALTY': 7.364397579478001, 'SAFE_DIST': 11.707439702285644, 'APPROACH_WEIGHT': 1.7782049238078574, 'PPO_EPOCHS': 3}. Best is trial 10 with value: -95.08.
+  [trial  23] score= -97.34  comp=  2.0%  coll= 49.7  params={'COLLISION_PENALTY': 33.382, 'SAFE_DIST': 5.854, 'APPROACH_WEIGHT': 3.104, 'PPO_EPOCHS': 4}
+[I 2026-04-19 06:43:28,069] Trial 23 finished with value: -97.34 and parameters: {'COLLISION_PENALTY': 33.38229950786147, 'SAFE_DIST': 5.853751081315363, 'APPROACH_WEIGHT': 3.1040111810400774, 'PPO_EPOCHS': 4}. Best is trial 10 with value: -95.08.
+  [trial  24] score=-118.18  comp=  1.0%  coll= 59.6  params={'COLLISION_PENALTY': 28.397, 'SAFE_DIST': 7.097, 'APPROACH_WEIGHT': 3.389, 'PPO_EPOCHS': 4}
+[I 2026-04-19 07:08:05,641] Trial 24 finished with value: -118.18 and parameters: {'COLLISION_PENALTY': 28.39685801349114, 'SAFE_DIST': 7.0966197201022485, 'APPROACH_WEIGHT': 3.389098891245705, 'PPO_EPOCHS': 4}. Best is trial 10 with value: -95.08.
+  [trial  25] score=-106.26  comp=  4.0%  coll= 55.1  params={'COLLISION_PENALTY': 27.148, 'SAFE_DIST': 5.365, 'APPROACH_WEIGHT': 2.749, 'PPO_EPOCHS': 5}
+[I 2026-04-19 07:11:15,528] Trial 25 finished with value: -106.26 and parameters: {'COLLISION_PENALTY': 27.147844460512523, 'SAFE_DIST': 5.365236936362249, 'APPROACH_WEIGHT': 2.749103092781761, 'PPO_EPOCHS': 5}. Best is trial 10 with value: -95.08.
+  [trial  26] score=-203.56  comp= 19.0%  coll=111.3  params={'COLLISION_PENALTY': 2.298, 'SAFE_DIST': 8.494, 'APPROACH_WEIGHT': 1.696, 'PPO_EPOCHS': 10}
+[I 2026-04-19 07:33:12,074] Trial 26 finished with value: -203.56 and parameters: {'COLLISION_PENALTY': 2.29824647933645, 'SAFE_DIST': 8.494353683628152, 'APPROACH_WEIGHT': 1.6964420361894095, 'PPO_EPOCHS': 10}. Best is trial 10 with value: -95.08.
+  [trial  27] score=-130.44  comp=  1.0%  coll= 65.7  params={'COLLISION_PENALTY': 29.696, 'SAFE_DIST': 6.417, 'APPROACH_WEIGHT': 2.111, 'PPO_EPOCHS': 5}
+[I 2026-04-19 07:34:41,469] Trial 27 finished with value: -130.44 and parameters: {'COLLISION_PENALTY': 29.696166391077668, 'SAFE_DIST': 6.4173490286069335, 'APPROACH_WEIGHT': 2.111484464659563, 'PPO_EPOCHS': 5}. Best is trial 10 with value: -95.08.
+
+[sweep] done in 377.9 min  completed=28
+
+[sweep] best trial #10  score=-95.08  comp=6.0%  coll=50.5
+[sweep] best params: {'COLLISION_PENALTY': 3.6942381295144475, 'SAFE_DIST': 9.455183601516811, 'APPROACH_WEIGHT': 1.4523282703659097, 'PPO_EPOCHS': 3}
+
+[final] training best config for 3000 episodes: {'COLLISION_PENALTY': 3.6942381295144475, 'SAFE_DIST': 9.455183601516811, 'APPROACH_WEIGHT': 1.4523282703659097, 'PPO_EPOCHS': 3}
+[sweep] final checkpoint: sweep_results/best_final/ckpt/final.pt

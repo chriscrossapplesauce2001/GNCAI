@@ -3,9 +3,18 @@ Formation Config — Single Source of Truth for All Hyperparameters
 
 Every tunable value in the project lives here.
 Change something here and it propagates everywhere.
+
+Selected params can be overridden at import time via FORMATION_<NAME> env vars
+(used by sweep_optuna.py to launch trials with different configs).
 """
 
+import os as _os
 import numpy as np
+
+
+def _override(name, default, cast=float):
+    v = _os.getenv(f"FORMATION_{name}")
+    return cast(v) if v is not None else default
 
 # =============================================================================
 # World Parameters
@@ -20,7 +29,7 @@ NUM_AGENTS = 3            # Default number of agents
 MAX_STEPS = 400           # Steps per episode before truncation
 TARGET_THRESHOLD = 12.0   # Each agent must be within this distance to "arrive" at target
 DESIRED_SPACING = 8.0     # Target inter-agent distance (units)
-COMPLETION_BONUS = 500.0  # Per-agent bonus reward for reaching the target
+COMPLETION_BONUS = _override("COMPLETION_BONUS", 500.0)  # Per-agent bonus reward for reaching the target
 
 # =============================================================================
 # Observation & Action Dimensions
@@ -56,11 +65,11 @@ HIDDEN_DIM = 128          # Hidden layer size for Actor and Critic networks
 # Reward Weights
 # =============================================================================
 
-FORMATION_WEIGHT = 0.3     # spacing penalty weight (capped)
+FORMATION_WEIGHT = _override("FORMATION_WEIGHT", 0.3)     # spacing penalty weight (capped)
 TIME_PENALTY = 0.0         # disabled for now
-APPROACH_WEIGHT = 2.0      # approach reward scale (+2/step max)
-COLLISION_PENALTY = 2.0    # proximity penalty scale (-2/step when overlapping)
-SAFE_DIST = 5.0            # ramp distance for proximity penalty (2*AGENT_RADIUS + buffer)
+APPROACH_WEIGHT = _override("APPROACH_WEIGHT", 2.0)       # approach reward scale (+2/step max)
+COLLISION_PENALTY = _override("COLLISION_PENALTY", 2.0)   # proximity penalty scale
+SAFE_DIST = _override("SAFE_DIST", 5.0)                   # ramp distance for proximity penalty
 OBSTACLE_PENALTY = 0.0     # disabled for now
 SMOOTHNESS_WEIGHT = 0.0    # disabled for now
 
@@ -72,10 +81,10 @@ LEARNING_RATE = 1e-4       # Lower for fine-tuning from navigation checkpoint
 GAMMA = 0.99               # Discount factor (how much to care about future rewards)
 GAE_LAMBDA = 0.95          # GAE lambda (bias-variance tradeoff for advantage estimation)
 CLIP_EPSILON = 0.2         # PPO clipping range — limits policy update magnitude
-PPO_EPOCHS = 10            # Number of optimization passes over each episode's data
+PPO_EPOCHS = _override("PPO_EPOCHS", 10, int)            # Number of optimization passes over each episode's data
 BATCH_SIZE = 0             # 0 = use full buffer as one batch (MAPPO SOTA)
 EPISODES_PER_UPDATE = 10   # Collect N episodes before each PPO update
-ENTROPY_COEF = 0.01        # Entropy bonus coefficient — encourages exploration
+ENTROPY_COEF = _override("ENTROPY_COEF", 0.01)        # Entropy bonus coefficient — encourages exploration
 VALUE_LOSS_COEF = 1.0      # Critic loss scaling factor
 
 # =============================================================================

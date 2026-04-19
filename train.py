@@ -23,6 +23,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -58,6 +59,10 @@ def parse_args():
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints", help="Where to save checkpoints")
     parser.add_argument("--resume", type=str, default=None, help="Resume from checkpoint file")
     parser.add_argument("--log-dir", type=str, default="runs", help="Tensorboard log directory")
+    parser.add_argument("--metrics-out", type=str, default=None,
+                        help="Write final metrics as JSON to this path (for sweep integration)")
+    parser.add_argument("--quiet", action="store_true",
+                        help="Suppress per-50-episode progress table (sweep mode)")
     return parser.parse_args()
 
 
@@ -210,7 +215,7 @@ def train(args):
             episode += 1
 
         # Print summary every 50 episodes
-        if episode % 50 < EPISODES_PER_UPDATE or episode <= EPISODES_PER_UPDATE:
+        if not args.quiet and (episode % 50 < EPISODES_PER_UPDATE or episode <= EPISODES_PER_UPDATE):
             avg_reward = np.mean(recent_rewards[-50:])
             avg_error = np.mean(recent_errors[-50:])
             avg_coll = np.mean(recent_collisions[-50:])
@@ -279,6 +284,25 @@ def train(args):
 
     if writer:
         writer.close()
+
+    # Write final metrics JSON (used by sweep_optuna.py)
+    if args.metrics_out:
+        n = min(100, len(recent_rewards))
+        metrics = {
+            "episodes": args.episodes,
+            "elapsed_s": elapsed,
+            "mean_reward_last_n": float(np.mean(recent_rewards[-n:])),
+            "mean_collisions_last_n": float(np.mean(recent_collisions[-n:])),
+            "completion_rate_last_n": float(np.mean(recent_completions[-n:])),
+            "mean_form_error_last_n": float(np.mean(recent_errors[-n:])),
+            "mean_distance_last_n": float(np.mean(recent_distances[-n:])),
+            "mean_steps_last_n": float(np.mean(recent_steps[-n:])),
+            "best_reward": float(best_reward) if np.isfinite(best_reward) else None,
+            "n": n,
+        }
+        os.makedirs(os.path.dirname(os.path.abspath(args.metrics_out)), exist_ok=True)
+        with open(args.metrics_out, "w") as f:
+            json.dump(metrics, f, indent=2)
 
 
 if __name__ == "__main__":

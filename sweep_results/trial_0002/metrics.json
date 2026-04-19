@@ -1,0 +1,12 @@
+{
+  "episodes": 1000,
+  "elapsed_s": 1651.034265756607,
+  "mean_reward_last_n": -6835.062366705533,
+  "mean_collisions_last_n": 303.2,
+  "completion_rate_last_n": 0.0,
+  "mean_form_error_last_n": 0.0,
+  "mean_distance_last_n": 2.9178109042899054,
+  "mean_steps_last_n": 400.0,
+  "best_reward": -2707.6293225815252,
+  "n": 100
+}

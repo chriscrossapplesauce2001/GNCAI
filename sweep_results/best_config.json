@@ -1,0 +1,18 @@
+{
+  "episodes": 3000,
+  "elapsed_s": 1375.824981212616,
+  "mean_reward_last_n": -289.0437678157625,
+  "mean_collisions_last_n": 139.29,
+  "completion_rate_last_n": 0.34,
+  "mean_form_error_last_n": 0.0,
+  "mean_distance_last_n": 67.72790406427922,
+  "mean_steps_last_n": 314.28,
+  "best_reward": -236.67542402275257,
+  "n": 100,
+  "params": {
+    "COLLISION_PENALTY": 3.6942381295144475,
+    "SAFE_DIST": 9.455183601516811,
+    "APPROACH_WEIGHT": 1.4523282703659097,
+    "PPO_EPOCHS": 3
+  }
+}

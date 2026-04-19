@@ -1,0 +1,76 @@
+/home/agentsmith/cwilsch/RL/GNCAI/venv/lib/python3.12/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+
+============================================================
+  CONFIGURATION
+============================================================
+  World size:       100.0 x 100.0
+  Physics dt:       0.1
+  Max speed:        5.0
+  Agent radius:     1.5
+  Obstacle radius:  3.0
+  Max steps/ep:     400
+  Target threshold: 12.0
+  Completion bonus: 500.0
+  Observation dim:  20
+  Action dim:       2
+  Hidden dim:       128
+  ---
+  Learning rate:    0.0001
+  Gamma:            0.99
+  GAE lambda:       0.95
+  Clip epsilon:     0.2
+  PPO epochs:       4
+  Eps per update:   10
+  Batch size:       0
+  Entropy coef:     0.01
+  Value loss coef:  1.0
+  ---
+  Reward weights:
+    Formation:      0.3
+    Time penalty:   -0.0
+    Approach:       3.389098891245705
+    Proximity:      -28.39685801349114 (ramp over 7.0966197201022485 units)
+    Obstacle:       -0.0
+    Smoothness:     0.0
+============================================================
+
+============================================================
+  MAPPO TRAINING
+============================================================
+  Agents:    3
+  Obstacles: 0
+  Episodes:  1000
+  Render:    off
+  Verbose:   False
+============================================================
+  Device:    cuda (NVIDIA GB10)
+  Tensorboard: tensorboard --logdir sweep_results/trial_0024/tb
+
+  Training started...
+
+   Episode |   Reward |  FormErr | Collis |   Dist |  Done% |  Steps |  PolLoss |  ValLoss |  Entropy
+  ---------------------------------------------------------------------------------------------------------
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/checkpoint_200.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/best.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/checkpoint_400.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/checkpoint_600.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/checkpoint_800.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/checkpoint_1000.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/best.pt
+  [SAVE] Checkpoint saved to sweep_results/trial_0024/ckpt/final.pt
+
+============================================================
+  TRAINING COMPLETE
+============================================================
+  Episodes:    1000
+  Time:        1655s (27.6 min)
+  Final reward (avg last 50): -1462.99
+  Final form error (avg 50):  0.00
+  Final collisions (avg 50):  59.2
+  Completion rate (last 50):  0%
+  Avg steps (last 50):        400
+  Best avg reward:            -1591.68
+  Checkpoints in:             sweep_results/trial_0024/ckpt/
+  View logs:  tensorboard --logdir sweep_results/trial_0024/tb
+============================================================

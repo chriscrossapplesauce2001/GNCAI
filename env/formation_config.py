@@ -77,7 +77,7 @@ SMOOTHNESS_WEIGHT = 0.0    # disabled for now
 # PPO Hyperparameters
 # =============================================================================
 
-LEARNING_RATE = 1e-4       # Lower for fine-tuning from navigation checkpoint
+LEARNING_RATE = _override("LEARNING_RATE", 1e-4)       # Lower for fine-tuning from navigation checkpoint
 GAMMA = 0.99               # Discount factor (how much to care about future rewards)
 GAE_LAMBDA = 0.95          # GAE lambda (bias-variance tradeoff for advantage estimation)
 CLIP_EPSILON = 0.2         # PPO clipping range — limits policy update magnitude
